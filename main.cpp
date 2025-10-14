@@ -8,6 +8,13 @@
 #include <fstream>
 #include <sstream>
 #include <ctime>
+#include <utility> 
+
+struct MadeReader{
+    std::ifstream reader;
+    int _len;
+};
+
 
 struct FlightNumber{
     std::string airport;
@@ -91,43 +98,70 @@ std::vector<std::string> split(std::string line, char delim){
 }
 
 class Tester{
-    public:
-    int big_test(std::string root_to_input_file){
-        std::cout<<"Here 1"<<std::endl;
+    private:
+    Record make_record(std::string line){
+        Record to_return;
+        auto to_rec = split(line, ',');
+        FlightNumber now_FN;
+        DepartureTime now_DP;
+        now_FN.airport = slice(to_rec[0], 0, 2);
+        now_FN.id = std::stoi(slice(to_rec[0], 2, 5));
+        auto to_DP = split(to_rec[1], ':');
+        now_DP.hh = std::stoi(to_DP[0]);
+        now_DP.mm = std::stoi(to_DP[1]);
+        to_return.flight_number = now_FN;
+        to_return.time = now_DP;
+        to_return.cost = std::stoi(to_rec[2]);
+        if (to_rec.size() == 4){
+            to_return.departure_days  = split(to_rec[3], ' ');
+        }else{
+            to_return.departure_days = {};
+        }
+        return to_return;
+    }
+
+    MadeReader make_reader(std::string root_to_input_file){
+        MadeReader to_return;
         std::ifstream reader(root_to_input_file);
         std::string line_n;
         int n=0;
         if (std::getline(reader, line_n)){
             n = std::stoi(line_n);
         }else{
-            std::cout<<"Wrong file";
-            return -1;
+            throw std::invalid_argument( "Wrong file!🤘" );
         }
-        std::cout<<n<<std::endl;
-        Record first_arr[n];
+        to_return.reader = std::move(reader);
+        to_return._len = n;
+        return to_return;
+    }
+
+    public:
+    int big_test(std::string root_to_input_file){
+        std::cout<<"Here 1"<<std::endl;
+        std::string line_n;
+        MadeReader reader = make_reader(root_to_input_file);
+        Record* first_arr = new Record[reader._len];
         std::cout<<"Here 2"<<std::endl;
         std::string line ="";
         int ind=0;
         auto start_time = clock();
-        while (std::getline(reader, line)){
-            Record to_add;
-            auto to_rec = split(line, ',');
-            FlightNumber now_FN;
-            DepartureTime now_DP;
-            now_FN.airport = slice(to_rec[0], 0, 2);
-            now_FN.id = std::stoi(slice(to_rec[0], 2, 5));
-            auto to_DP = split(to_rec[1], ':');
-            now_DP.hh = std::stoi(to_DP[0]);
-            now_DP.mm = std::stoi(to_DP[1]);
-            to_add.flight_number = now_FN;
-            to_add.time = now_DP;
-            to_add.cost = std::stoi(to_rec[2]);
-            to_add.departure_days  = split(to_rec[3], ' ');
+        while (std::getline(reader.reader, line)){
+            Record to_add = make_record(line);
             first_arr[ind] = to_add;
+            ind++;
         }
         auto end_time = clock();
-        std::cout<<"Here 3";
-        std::cout<<end_time - start_time;
+        std::cout<<"Time of add to dinamyc arr: "<<end_time - start_time<<std::endl;
+        std::vector<Record> data;
+        reader = make_reader(root_to_input_file);
+        start_time = clock();
+        while (std::getline(reader.reader, line)){
+            Record to_add = make_record(line);
+            data.push_back(to_add);
+        }
+        end_time = clock();
+        std::cout<<"Time of add to vector: "<<end_time - start_time<<std::endl;
+        //add entering in sorted array 
         return 0;
     }
 };
