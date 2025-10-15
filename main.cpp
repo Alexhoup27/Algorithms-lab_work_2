@@ -9,6 +9,7 @@
 #include <sstream>
 #include <ctime>
 #include <utility> 
+#include <map>
 
 struct MadeReader{
     std::ifstream reader;
@@ -96,6 +97,32 @@ std::vector<std::string> split(std::string line, char delim){
     return to_return;
 }
 
+class FibDigits{
+    std::map<int, int> fib_digits = {{0, 0}, {1, 1}, {2, 1}};
+    private: 
+    int eval_next_digit(int new_ind){
+        int to_return;
+        if (new_ind < fib_digits.size()){
+            return fib_digits[new_ind];
+        }else{
+            to_return = fib_digits[new_ind - 1] + fib_digits[new_ind - 2];
+            if (fib_digits.count(new_ind) ==0){
+                fib_digits[new_ind] = to_return;
+            }
+            return to_return;
+         }
+    }
+    public:
+    int get_val(int ind){
+        if (fib_digits.count(ind) ==0){
+            return eval_next_digit(ind);
+        }else{
+            return fib_digits[ind];
+        }
+        return -1;
+    }
+};
+
 class Tester{
     private:
     Record make_record(std::string line){
@@ -180,7 +207,7 @@ class Tester{
     }
 
     int linear_search_arr(Record data[], int search_cost, int _len){
-        int ind = 0;
+        int ind = -1;
         for (int i = 0; i < _len; i++){
             if (data[i].cost == search_cost){
                 ind = i;
@@ -190,8 +217,81 @@ class Tester{
         return ind;
     }
 
+    int fib_search_arr(Record data[],int search_cost, int _len, FibDigits fib_digits, int fib_ind){
+        int offset = -1;
+        while (fib_digits.get_val(fib_ind) > 1){
+            int i = std::min(offset+fib_digits.get_val(fib_ind-2), _len -1);
+            if (data[i].cost < search_cost){
+                fib_ind --;
+                offset = i;
+            }else if(data[i].cost > search_cost){
+                fib_ind -=2;
+
+            }else{
+                return i;
+            }
+        }
+        if (fib_digits.get_val(fib_ind-1) && data[offset + 1].cost == search_cost){
+            offset + 1;
+        }
+        std::cout<<fib_ind<<std::endl;
+        return -1;
+    }  
+
+    //working wrong !!
+    int new_fib_search_arr(Record data[],int search_cost, int _len, FibDigits fib_digits, int fib_ind){
+        int fib_1 = fib_digits.get_val(fib_ind);
+        int fib_2 = fib_digits.get_val(fib_ind - 1);
+        int fib_3 = fib_digits.get_val(fib_ind- 2);
+        int offset = -1;
+        while (fib_1 != 1){
+            auto ind = std::min(offset+ fib_3, _len -1);
+            if (data[ind].cost > search_cost){
+                fib_1 = fib_2;
+                fib_2 = fib_3;
+                fib_3 = fib_1 - fib_2;
+                offset = ind;
+            }else if(data[fib_1].cost < search_cost){
+                fib_1 = fib_3;
+                fib_2 -= fib_3;
+                fib_3 = fib_1 - fib_2;
+            }else{
+                return ind;
+            }
+        }
+        if (fib_2 && data[offset + 1].cost == search_cost){
+            return offset + 1;
+        }
+        return -1;
+    }
+
+    int bad_fib_search(Record data[], int search_cost, int _len){
+        int a = 0, b=1, c=1;
+        int offset = -1;
+        while (c > 1) {
+            int i = std::min(offset + a, _len - 1);
+            if (data[i].cost < search_cost) {
+                c = b;
+                b = a;
+                a = c - b;
+                offset = i;
+            }
+            else if (data[i].cost > search_cost) {
+                c = a;
+                b = b - a;
+                a = c - b;
+            }
+            else
+                return i;
+        }
+        if (b && data[offset + 1].cost == search_cost){
+            return offset + 1;
+        }
+        return -1;
+    }
+
     int linear_search_vec(std::vector<Record> data, int search_cost, int _len){
-        int ind = 0;
+        int ind = -1;
         for (int i = 0; i < _len; i++){
             if (data[i].cost == search_cost){
                 ind = i;
@@ -223,6 +323,32 @@ class Tester{
         end_time = clock();
         std::cout<<"Linear search on sorted arr: "<< end_time - start_time<< std::endl;
         std::cout<<"Index: "<<ind<<std::endl;
+        std::cout<<sorted_data[ind].cost<<std::endl;
+        FibDigits fib_digits;
+        int fib_ind = 0;
+        while(fib_digits.get_val(fib_ind) < _len){
+            fib_ind ++;
+        }
+        start_time = clock();
+        // ind = -1;
+        // ind = fib_search_arr(raw_data, cost, _len, fib_digits, fib_ind);
+        // std::cout<<fib_ind<<std::endl;
+        // end_time = clock();
+        // std::cout<<"Fibonachi search on raw arr: "<< end_time - start_time<< std::endl;
+        // std::cout<<"Index: "<<ind<<std::endl;
+        // start_time = clock();
+        // ind = -1;
+        // ind = fib_search_vec(data_vector, cost, _len, fib_digits, fib_ind);
+        // end_time = clock();
+        // std::cout<<"Fibonachi search on vector: "<< end_time - start_time<< std::endl;
+        // std::cout<<"Index: "<<ind<<std::endl;start_time = clock();
+        ind = -1;
+        // ind = new_fib_search_arr(sorted_data, cost, _len, fib_digits, fib_ind);
+        ind = bad_fib_search(sorted_data, cost, _len);
+        end_time = clock();
+        std::cout<<"Fibonachi search on sorted arr: "<< end_time - start_time<< std::endl;
+        std::cout<<"Index: "<<ind<<std::endl;
+        std::cout<< fib_digits.get_val(fib_ind)<<std::endl;
         return 0;
     }
     public:
