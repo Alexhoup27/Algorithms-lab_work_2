@@ -1,5 +1,5 @@
-# include <iostream>
-# include <string>
+#include <iostream>
+#include <string>
 #include <vector>
 #include <cmath>
 #include <math.h>
@@ -14,7 +14,6 @@ struct MadeReader{
     std::ifstream reader;
     int _len;
 };
-
 
 struct FlightNumber{
     std::string airport;
@@ -135,19 +134,108 @@ class Tester{
         return to_return;
     }
 
+    int search_ind_to_insert(Record data[], Record elem, int _len){
+        Record prev;
+        Record next;
+        if (_len == 0){
+            return 0;
+        }else if (_len ==1){
+            if (elem.cost >= data[0].cost){
+                return 0;
+            }else{
+                return 1;
+            }
+        }else{
+            prev = data[0];
+            next = data[1];
+            for (int i = 1; i < _len; i++){
+                if (elem.cost < prev.cost){
+                    return i-1;
+                }else if (elem.cost >= next.cost){
+                    return i+1;
+                }else if (elem.cost>= prev.cost && elem.cost < next.cost){
+                    return i;
+                }else{
+                    prev = next;
+                    next = data[i+1];
+                }
+            }
+        }
+        return -1;
+    }
+
+    Record* insert_elem(Record data[], Record elem, int _len, int ind){
+        if (ind >= _len){
+            data[ind] = elem;
+        }else{
+            auto to_move = data[ind];
+            data[ind] = elem;
+            for (int i = ind+1; i<=_len; i++){
+                auto new_to_move = data[i];
+                data[i] = to_move;
+                to_move = new_to_move;
+            }
+        }
+        return data;
+    }
+
+    int linear_search_arr(Record data[], int search_cost, int _len){
+        int ind = 0;
+        for (int i = 0; i < _len; i++){
+            if (data[i].cost == search_cost){
+                ind = i;
+                break;
+            }
+        }
+        return ind;
+    }
+
+    int linear_search_vec(std::vector<Record> data, int search_cost, int _len){
+        int ind = 0;
+        for (int i = 0; i < _len; i++){
+            if (data[i].cost == search_cost){
+                ind = i;
+                break;
+            }
+        }
+        return ind;
+    }
+
+    int test_search_algs(Record raw_data[], Record sorted_data[], std::vector<Record> data_vector, int _len){
+        int cost = 0;
+        int ind = -1;
+        std::cout<<"Enter cost of flight ticket :"<<std::endl;
+        std::cin>>cost;
+        auto start_time  = clock();
+        ind = linear_search_arr(raw_data, cost, _len);
+        auto end_time = clock();
+        std::cout<<"Linear search on row array: "<< end_time - start_time<< std::endl;
+        std::cout<<"Index: "<<ind<<std::endl;
+        start_time = clock();
+        ind = -1;
+        ind = linear_search_vec(data_vector, cost, _len);
+        end_time = clock();
+        std::cout<<"Linear search on vector: "<< end_time - start_time<< std::endl;
+        std::cout<<"Index: "<<ind<<std::endl;
+        start_time = clock();
+        ind = -1;
+        ind = linear_search_arr(sorted_data, cost, _len);
+        end_time = clock();
+        std::cout<<"Linear search on sorted arr: "<< end_time - start_time<< std::endl;
+        std::cout<<"Index: "<<ind<<std::endl;
+        return 0;
+    }
     public:
     int big_test(std::string root_to_input_file){
-        std::cout<<"Here 1"<<std::endl;
         std::string line_n;
         MadeReader reader = make_reader(root_to_input_file);
-        Record* first_arr = new Record[reader._len];
-        std::cout<<"Here 2"<<std::endl;
+        Record* raw_arr = new Record[reader._len];
         std::string line ="";
         int ind=0;
         auto start_time = clock();
         while (std::getline(reader.reader, line)){
             Record to_add = make_record(line);
-            first_arr[ind] = to_add;
+            raw_arr[ind] = to_add;
             ind++;
         }
         auto end_time = clock();
@@ -161,7 +249,20 @@ class Tester{
         }
         end_time = clock();
         std::cout<<"Time of add to vector: "<<end_time - start_time<<std::endl;
-        //add entering in sorted array 
+        reader = make_reader(root_to_input_file);
+        Record* sorted_arr = new Record[reader._len];
+        start_time = clock();
+        ind =0;
+        while (std::getline(reader.reader, line)){
+            Record to_add = make_record(line);
+            auto  new_ind = search_ind_to_insert(sorted_arr, to_add, ind);
+            sorted_arr = insert_elem(sorted_arr, to_add, ind, new_ind);
+            ind ++;
+        }
+        end_time = clock();
+        std::cout<<"Time of add to sorted array: "<<end_time - start_time<<std::endl;
+        std::cout<<"Start testing search algorithms"<<std::endl;
+        test_search_algs(raw_arr, sorted_arr, data, reader._len);
         return 0;
     }
 };
@@ -169,6 +270,7 @@ class Tester{
 int main(){
     std::string root_to_input_file;
     std::cout<<"Enter file name(start from disk)"<<std::endl;
+    //C:\Users\Alexandr\C++Projects\Algotihms\lab_work_2\output.txt
     std::cin>>root_to_input_file;
     Tester test;
     test.big_test(root_to_input_file);
