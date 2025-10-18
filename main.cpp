@@ -72,6 +72,14 @@ std::vector<T> slice(std::vector<T> data, int first_ind, int second_ind){
     return new_data;
 }
 
+void print_data_around_ind(Record data[], int ind){
+    std::cout<<ind<<std::endl;
+    for (int i  = ind - 4; i < ind + 4; i ++){
+        std::cout<<data[i].cost<<std::endl;
+    }
+}
+
+
 std::string slice(std::string data, int first_ind, int second_ind){
     std::string result="";
     if (second_ind > data.size()){
@@ -97,7 +105,18 @@ std::vector<std::string> split(std::string line, char delim){
     return to_return;
 }
 
-class FibDigits{
+bool is_sorted(Record data[], int _len){
+    for (int i =1;i < _len; i++){
+        if (data[i].cost < data[i-1].cost){
+            print_data_around_ind(data, i);
+            return false;
+        }
+    }
+    return true;
+}
+
+
+class FibDigits{ 
     std::map<int, int> fib_digits = {{0, 0}, {1, 1}, {2, 1}};
     private: 
     int eval_next_digit(int new_ind){
@@ -105,7 +124,7 @@ class FibDigits{
         if (new_ind < fib_digits.size()){
             return fib_digits[new_ind];
         }else{
-            to_return = fib_digits[new_ind - 1] + fib_digits[new_ind - 2];
+            to_return = eval_next_digit(new_ind-1) + eval_next_digit(new_ind-2);
             if (fib_digits.count(new_ind) ==0){
                 fib_digits[new_ind] = to_return;
             }
@@ -161,13 +180,23 @@ class Tester{
         return to_return;
     }
 
+    int new_search_ind_to_insert(Record data[], Record elem, int _len){
+        int to_return =0;
+        for (int i =0 ; i < _len; i++){
+            if (elem.cost <= data[i].cost){
+                return i;
+            }
+        }
+        return _len;
+    }
+
     int search_ind_to_insert(Record data[], Record elem, int _len){
         Record prev;
         Record next;
         if (_len == 0){
             return 0;
         }else if (_len ==1){
-            if (elem.cost >= data[0].cost){
+            if (elem.cost <= data[0].cost){
                 return 0;
             }else{
                 return 1;
@@ -176,11 +205,11 @@ class Tester{
             prev = data[0];
             next = data[1];
             for (int i = 1; i < _len; i++){
-                if (elem.cost < prev.cost){
+                if (elem.cost <= prev.cost){
                     return i-1;
-                }else if (elem.cost >= next.cost){
+                }else if (elem.cost > next.cost){
                     return i+1;
-                }else if (elem.cost>= prev.cost && elem.cost < next.cost){
+                }else if (elem.cost > prev.cost && elem.cost < next.cost){
                     return i;
                 }else{
                     prev = next;
@@ -206,6 +235,16 @@ class Tester{
         return data;
     }
 
+    Record* delete_elem(Record data[], int ind, int _len){
+        if (ind >= _len || ind <0) {
+            throw std::invalid_argument( "Wrong ind!" );
+        }
+        for (int i = ind + 1; i< _len; i++){
+            data[i-1] = data[i];
+        } 
+        return data;
+    }
+
     int linear_search_arr(Record data[], int search_cost, int _len){
         int ind = -1;
         for (int i = 0; i < _len; i++){
@@ -219,7 +258,9 @@ class Tester{
 
     int fib_search_arr(Record data[],int search_cost, int _len, FibDigits fib_digits, int fib_ind){
         int offset = -1;
+        int count = 0;
         while (fib_digits.get_val(fib_ind) > 1){
+            count ++;
             int i = std::min(offset+fib_digits.get_val(fib_ind-2), _len -1);
             if (data[i].cost < search_cost){
                 fib_ind --;
@@ -232,9 +273,8 @@ class Tester{
             }
         }
         if (fib_digits.get_val(fib_ind-1) && data[offset + 1].cost == search_cost){
-            offset + 1;
+            return offset + 1;
         }
-        std::cout<<fib_ind<<std::endl;
         return -1;
     }  
 
@@ -301,9 +341,10 @@ class Tester{
         return ind;
     }
 
-    int test_search_algs(Record raw_data[], Record sorted_data[], std::vector<Record> data_vector, int _len){
+    int* test_search_algs(Record raw_data[], Record sorted_data[], std::vector<Record> data_vector, int _len){
         int cost = 0;
         int ind = -1;
+        int* to_return= new int[2];
         std::cout<<"Enter cost of flight ticket :"<<std::endl;
         std::cin>>cost;
         auto start_time  = clock();
@@ -318,39 +359,48 @@ class Tester{
         std::cout<<"Linear search on vector: "<< end_time - start_time<< std::endl;
         std::cout<<"Index: "<<ind<<std::endl;
         start_time = clock();
+        to_return[0] = ind;
         ind = -1;
         ind = linear_search_arr(sorted_data, cost, _len);
         end_time = clock();
         std::cout<<"Linear search on sorted arr: "<< end_time - start_time<< std::endl;
         std::cout<<"Index: "<<ind<<std::endl;
-        std::cout<<sorted_data[ind].cost<<std::endl;
         FibDigits fib_digits;
         int fib_ind = 0;
         while(fib_digits.get_val(fib_ind) < _len){
             fib_ind ++;
         }
+        // std::cout<<"Check for sorted"<<std::endl;
+        // std::cout<<is_sorted(sorted_data, _len)<<std::endl;
         start_time = clock();
-        // ind = -1;
-        // ind = fib_search_arr(raw_data, cost, _len, fib_digits, fib_ind);
-        // std::cout<<fib_ind<<std::endl;
-        // end_time = clock();
-        // std::cout<<"Fibonachi search on raw arr: "<< end_time - start_time<< std::endl;
-        // std::cout<<"Index: "<<ind<<std::endl;
-        // start_time = clock();
-        // ind = -1;
-        // ind = fib_search_vec(data_vector, cost, _len, fib_digits, fib_ind);
-        // end_time = clock();
-        // std::cout<<"Fibonachi search on vector: "<< end_time - start_time<< std::endl;
-        // std::cout<<"Index: "<<ind<<std::endl;start_time = clock();
         ind = -1;
-        // ind = new_fib_search_arr(sorted_data, cost, _len, fib_digits, fib_ind);
-        ind = bad_fib_search(sorted_data, cost, _len);
+        ind = fib_search_arr(sorted_data, cost, _len, fib_digits, fib_ind);
         end_time = clock();
         std::cout<<"Fibonachi search on sorted arr: "<< end_time - start_time<< std::endl;
         std::cout<<"Index: "<<ind<<std::endl;
-        std::cout<< fib_digits.get_val(fib_ind)<<std::endl;
+        to_return[1] = ind;
+        return to_return;
+    }
+
+    int test_delete(int ind_arr[], Record raw_data[], Record sorted_data[], std::vector<Record> data_vector, int _len){
+        auto start_time = clock();
+        data_vector.erase(data_vector.begin()+ ind_arr[0]);
+        auto end_time = clock();
+        std::cout<<"Delete data from vec"<<std::endl;
+        std::cout<<end_time - start_time<<std::endl;
+        start_time = clock();
+        delete_elem(raw_data, ind_arr[0], _len);
+        end_time = clock();
+        std::cout<<"Delete data from raw arr"<<std::endl;
+        std::cout<<end_time - start_time<<std::endl;
+        start_time = clock();
+        delete_elem(raw_data, ind_arr[1], _len);
+        end_time = clock();
+        std::cout<<"Delete data from sorted arr"<<std::endl;
+        std::cout<<end_time - start_time<<std::endl;
         return 0;
     }
+
     public:
     int big_test(std::string root_to_input_file){
         std::string line_n;
@@ -381,14 +431,15 @@ class Tester{
         ind =0;
         while (std::getline(reader.reader, line)){
             Record to_add = make_record(line);
-            auto  new_ind = search_ind_to_insert(sorted_arr, to_add, ind);
+            auto  new_ind = new_search_ind_to_insert(sorted_arr, to_add, ind);
             sorted_arr = insert_elem(sorted_arr, to_add, ind, new_ind);
             ind ++;
         }
         end_time = clock();
         std::cout<<"Time of add to sorted array: "<<end_time - start_time<<std::endl;
         std::cout<<"Start testing search algorithms"<<std::endl;
-        test_search_algs(raw_arr, sorted_arr, data, reader._len);
+        auto ind_arr = test_search_algs(raw_arr, sorted_arr, data, reader._len);
+        test_delete(ind_arr, raw_arr, sorted_arr, data, reader._len);
         return 0;
     }
 };
@@ -401,4 +452,5 @@ int main(){
     Tester test;
     test.big_test(root_to_input_file);
     std::cout<<"Done"<<std::endl;
+    return 0;
 }
