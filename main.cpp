@@ -384,17 +384,23 @@ class Tester{
 
     int test_delete(int ind_arr[], Record raw_data[], Record sorted_data[], std::vector<Record> data_vector, int _len){
         auto start_time = clock();
-        data_vector.erase(data_vector.begin()+ ind_arr[0]);
+        for (int i =0 ; i<100; i++){
+            data_vector.erase(data_vector.begin()+ ind_arr[0]);
+        }
         auto end_time = clock();
         std::cout<<"Delete data from vec"<<std::endl;
         std::cout<<end_time - start_time<<std::endl;
-        start_time = clock();
+        for (int i =0; i<100; i++){
+            raw_data = delete_elem(raw_data, ind_arr[1], _len);
+        }
         delete_elem(raw_data, ind_arr[0], _len);
         end_time = clock();
         std::cout<<"Delete data from raw arr"<<std::endl;
         std::cout<<end_time - start_time<<std::endl;
         start_time = clock();
-        delete_elem(raw_data, ind_arr[1], _len);
+        for (int i =0; i<100; i++){
+            sorted_data = delete_elem(sorted_data, ind_arr[1], _len);
+        }
         end_time = clock();
         std::cout<<"Delete data from sorted arr"<<std::endl;
         std::cout<<end_time - start_time<<std::endl;
